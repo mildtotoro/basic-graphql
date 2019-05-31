@@ -1,17 +1,6 @@
-const { GraphQLServer } = require('graphql-yoga')
-
-const typeDefs = `
-type Query {
-  info: String!
-  feed: [Link!]!
-}
-
-type Link {
-  id: ID!
-  description: String!
-  url: String!
-}
-`
+const { GraphQLServer } = require('graphql-yoga');
+// import cloneDeep from 'lodash/cloneDeep';
+const cloneDeep = require('lodash/cloneDeep');
 
 let links = [{
   id: 'link-0',
@@ -24,20 +13,56 @@ let links = [{
   description: 'Fullstack tutorial for GraphQL'
 }]
 
-const resolvers = {
+let idCount = links.length
+const resolvers = { 
   Query: {
     info: () => "Test",
     feed: () => links,
   },
-  Link: {
-    id: (parent) => parent.id,
-    description: (parent) => parent.description,
-    url: (parent) => parent.url,
+  Mutation: {
+    post: (parent, args) => {
+      const link = {
+        id: `link-${idCount++}`,
+        description: args.description,
+        url: args.url,
+      }
+
+      links.push(link)
+      return link
+    },
+    updateLink: (parent, args) => {
+      let newLinks = cloneDeep(links);
+      let result;
+      links = newLinks.map((link) => {
+        if(link.id === args.id) {
+          link.url = args.url
+          link.description = args.description
+
+          result = link
+        }
+        return link
+      });
+
+      links = newLinks;
+
+      return result;
+    },
+    deleteLink: (parent, args) => {
+      const removeLink = links.find((link) => {
+        return (link.id === args.id)
+      })
+
+      links = links.filter((link) => {
+        return (link.id !== args.id)
+      });
+
+      return removeLink
+    }
   }
 }
 
 const server = new GraphQLServer({
-  typeDefs,
+  typeDefs: './src/schema.graphql',
   resolvers,
 })
 server.start(() => console.log(`Server is running on http://localhost:4000`))
