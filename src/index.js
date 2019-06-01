@@ -2,55 +2,28 @@ const { GraphQLServer } = require('graphql-yoga');
 // import cloneDeep from 'lodash/cloneDeep';
 const cloneDeep = require('lodash/cloneDeep');
 const { prisma } = require('./generated/prisma-client');
+const Query = require('./resolvers/Query')
+const Mutation = require('./resolvers/Mutation')
+const User = require('./resolvers/User')
+const Link = require('./resolvers/Link')
 
 const resolvers = {
-  Query: {
-    info: () => "This is the API of a Basic Graphql",
-    feed: (root, args, context, info) => {
-      return context.prisma.links()
-    }
-  },
-  Mutation: {
-    post: (root, args, context) => {
-      return context.prisma.createLink({
-        url: args.url,
-        description: args.description,
-      })
-    },
-    // updateLink: (parent, args) => {
-    //   let newLinks = cloneDeep(links);
-    //   let result;
-    //   links = newLinks.map((link) => {
-    //     if(link.id === args.id) {
-    //       link.url = args.url
-    //       link.description = args.description
-
-    //       result = link
-    //     }
-    //     return link
-    //   });
-
-    //   links = newLinks;
-
-    //   return result;
-    // },
-    // deleteLink: (parent, args) => {
-    //   const removeLink = links.find((link) => {
-    //     return (link.id === args.id)
-    //   })
-
-    //   links = links.filter((link) => {
-    //     return (link.id !== args.id)
-    //   });
-
-    //   return removeLink
-    // }
-  }
+  Query,
+  Mutation,
+  User,
+  Link
 }
 
+
+//https://www.howtographql.com/graphql-js/6-authentication/
 const server = new GraphQLServer({
-  typeDefs: './src/schema.graphql',
+  typeDefs: './schema.graphql',
   resolvers,
-  context: { prisma },
+  context: request => { 
+    return {
+      ...request,
+      prisma ,
+    }
+  },
 })
 server.start(() => console.log(`Server is running on http://localhost:4000`))
